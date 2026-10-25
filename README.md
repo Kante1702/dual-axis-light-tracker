@@ -7,6 +7,7 @@ Semestrálny projekt z predmetu VRS, ZS 2026/27.
 - [Meno 2]: snímače a kalibrácia
 - [Meno 3]: regulácia a testovanie
 - [Meno 4]: režimy, komunikácia, meranie energie
+marcinek kdeee? :/
 
 ## Zadanie
 
