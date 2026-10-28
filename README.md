@@ -142,7 +142,7 @@ Telemetria ide ako CSV riadok 50x za sekundu: čas, 4 snímače, S, e_h, e_v, uh
 
 ## Rozdelenie úloh
 
-### [Meno 1]: mechanika a servá
+### [Marcinek]: mechanika a servá
 - návrh a stavba pan-tilt mechanizmu, uchytenie panelu a snímacej hlavy
 - napájanie serv a schéma celého zapojenia
 - PWM na TIM3 a ovládač serv (`servo.c`), kalibrácia uhla pre každé servo
