@@ -4,9 +4,9 @@ Semestrálny projekt z predmetu VRS, ZS 2026/27.
 
 **Tím:**
 - [Marcinek]: mechanika a servá
-- [Meno 2]: snímače a kalibrácia
-- [Meno 3]: regulácia a testovanie
-- [Meno 4]: režimy, komunikácia, meranie energie
+- [Király]: snímače a kalibrácia
+- [Maszay]: regulácia a testovanie
+- [Kanta]: režimy, komunikácia, meranie energie
 
 ## Zadanie
 
@@ -149,7 +149,7 @@ Telemetria ide ako CSV riadok 50x za sekundu: čas, 4 snímače, S, e_h, e_v, uh
 - obmedzenie rozsahu a rýchlosti pohybu (`motion.c`)
 - meranie skutočnej rýchlosti a mŕtveho pásma serv
 
-### [Meno 2]: snímače, filtrácia, kalibrácia
+### [Király]: snímače, filtrácia, kalibrácia
 - zapojenie fotorezistorov a výber rezistorov do deličov
 - návrh prepážky, porovnanie dvoch výšok
 - ADC1 so 4 kanálmi, spúšťanie časovačom, DMA (`sensors.c`)
@@ -157,7 +157,7 @@ Telemetria ide ako CSV riadok 50x za sekundu: čas, 4 snímače, S, e_h, e_v, uh
 - výpočet e_h, e_v, S a detekcia straty zdroja
 - meranie charakteristiky e(φ) a šumu pred filtráciou a po nej
 
-### [Meno 3]: regulácia a vyhodnotenie
+### [Maszay]: regulácia a vyhodnotenie
 - krokový, P a PI regulátor pre obe osi, anti-windup (`control.c`)
 - časovanie regulačnej slučky
 - prípravok s lampou na serve a pohybové profily (`testrig.c`)
@@ -165,7 +165,7 @@ Telemetria ide ako CSV riadok 50x za sekundu: čas, 4 snímače, S, e_h, e_v, uh
 - Python skript na metriky a grafy (`tools/analyze.py`)
 - porovnanie regulátorov
 
-### [Meno 4]: režimy, komunikácia, energia
+### [Kanta]: režimy, komunikácia, energia
 - stavový automat režimov, prepínanie tlačidlom a cez UART, LED indikácia (`fsm.c`)
 - odvracanie od svetla a vyhľadávanie (`search.c`)
 - UART s prerušením a kruhovým bufferom, príkazy a telemetria (`comm.c`)
