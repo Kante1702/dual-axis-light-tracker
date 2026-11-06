@@ -80,9 +80,16 @@ Meriame dva prípady:
 
 Každé meranie spravíme aspoň 3x pre každý regulátor. STM32 posiela dáta cez UART, v PC ich ukladáme do CSV a vyhodnocujeme v Pythone.
 
-### Meranie energie (voliteľné)
+### Meranie prúdu a energie panelu
 
-Použijeme dva rovnaké panely, jeden na sledovači a druhý pevný. Každý má vlastný INA219 a rovnaký záťažový rezistor. Počas rovnakého scenára integrujeme výkon oboch panelov a porovnáme energiu. Ak stihneme, odmeriame aj spotrebu serv, aby bolo vidieť, či sa sledovanie oplatí.
+Na sledovači je solárny panel 6 V / 1 W so záťažovým rezistorom. Prúd a napätie panelu
+meria modul INA219 na zbernici I2C1. STM32 hodnoty prepočíta na prúd, napätie a výkon,
+prúd filtruje kĺzavým priemerom a výkon integruje na energiu E = Σ U·I·Δt. Všetky hodnoty
+posiela v telemetrii do PC.
+
+Prínos sledovania overíme tak, že rovnaký scenár pohybu lampy na prípravku spustíme raz
+so zapnutým sledovaním a raz s panelom zafixovaným v počiatočnej polohe. Porovnáme
+energiu získanú v oboch prípadoch.
 
 ## Hardvér
 
@@ -91,9 +98,9 @@ Použijeme dva rovnaké panely, jeden na sledovači a druhý pevný. Každý má
 - pan-tilt držiak (3D tlač)
 - 4x fotorezistor GL5528 a 4x rezistor 10 kΩ do deličov
 - tieniaca prepážka (3D tlač)
-- 2x solárny panel 5-6 V, cca 1 W
-- 2x modul INA219 (adresy 0x40 a 0x41)
-- 2x záťažový rezistor pre panely
+- 1x solárny panel 5-6 V, cca 1 W (+1 voliteľne, pevne natočený na porovnanie)
+- 1x modul INA219, adresa 0x40 (+1 voliteľne, adresa 0x41)
+- 1x záťažový rezistor pre panel (+1 voliteľne)
 - externý zdroj 5 V / min. 2 A pre servá, so spoločnou zemou s Nucleo
 - kondenzátor 470-1000 µF na napájanie serv
 - 2x LED lampa
