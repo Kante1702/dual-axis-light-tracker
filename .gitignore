@@ -1,0 +1,17 @@
+# build výstupy
+Debug/
+Release/
+*.o
+*.d
+*.su
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+
+# lokálne nastavenia IDE
+.metadata/
+.settings/
+*.launch
+RemoteSystemsTempFiles/
