@@ -28,6 +28,8 @@ typedef struct {
     float    pv_ma;
     float    pv_mw;
     float    pv_j;
+    uint8_t  rig_phase; /* faza pripravku, testrig_phase() */
+    uint32_t overruns;  /* pocet nestihnutych tickov */
 } telemetry_t;
 
 void comm_init(void);
