@@ -15,3 +15,5 @@ Release/
 .settings/
 *.launch
 RemoteSystemsTempFiles/
+tools/sim_out/
+__pycache__/
