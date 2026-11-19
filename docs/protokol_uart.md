@@ -16,11 +16,13 @@ Pravidlá:
 - jeden príkaz na riadok, ukončený `\r`, `\n` alebo `\r\n` (PuTTY posiela pri Enteri iba `\r`)
 - veľké a malé písmená sa nerozlišujú, `kp 0.8` je to isté ako `KP 0.8`
 - slová oddeľuje jedna alebo viac medzier
-- desatinné čísla s bodkou, napríklad `0.8`
+- desatinné čísla s bodkou, bez exponentu, napríklad `0.8` alebo `-12.5`
 - riadok dlhší ako 64 znakov sa zahodí s odpoveďou `#ERR TOO_LONG`
 - prázdny riadok sa ignoruje
 
-`comm.c` iba rozparsuje príkaz a zavolá funkciu modulu, ktorý ho vykoná. Rozsah hodnôt kontroluje modul: funkcia vráti `false` a `comm.c` odpovie `#ERR RANGE`. Názvy funkcií v tabuľke sú návrh na dohodu.
+`comm.c` iba rozparsuje príkaz a zavolá funkciu modulu, ktorý ho vykoná. Rozsah hodnôt kontroluje modul: funkcia vráti `false` a `comm.c` odpovie `#ERR RANGE`. Názvy funkcií v tabuľke sú návrh na dohodu, ich deklarácie sú v `comm_hooks.h`.
+
+Kým modul funkciu nemá, použije sa dočasná (weak) verzia z `comm_hooks.c` a príkaz odpovie `#ERR NOT_IMPL`. Keď člen tímu napíše vo svojom module funkciu s rovnakým menom a parametrami, automaticky sa použije jeho verzia.
 
 | Príkaz | Čo robí | Volá | Modul |
 |---|---|---|---|
@@ -30,12 +32,15 @@ Pravidlá:
 | `KP <x>` | zosilnenie P | `control_set_kp(x)` | Maszay |
 | `KI <x>` | zosilnenie I | `control_set_ki(x)` | Maszay |
 | `STEP <deg>` | krok Δ krokového riadenia | `control_set_step(deg)` | Maszay |
+| `DB <x>` | pásmo necitlivosti regulátora | `control_set_deadband(x)` | Maszay |
+| `SIGN PAN\|TILT 1\|-1` | otočenie smeru osi regulátora | `control_set_sign(os, znamienko)` | Maszay |
 | `VMAX <deg/s>` | max. rýchlosť serv | `motion_set_vmax(v)` | Marcinek |
 | `LIM PAN <min> <max>` | rozsah pan | `motion_set_limits(AXIS_PAN, min, max)` | Marcinek |
 | `LIM TILT <min> <max>` | rozsah tilt | `motion_set_limits(AXIS_TILT, min, max)` | Marcinek |
 | `CAL DARK\|BRIGHT\|SAVE` | kalibrácia snímačov | `calib_capture_dark()`, `calib_capture_bright()`, `calib_save()` | Király |
 | `RIG RAMP <deg/s>` | lampa ide rampou | `testrig_ramp(v)` | Maszay |
 | `RIG SINE <amp> <perioda>` | lampa ide sínusom | `testrig_sine(amp, perioda)` | Maszay |
+| `RIG JUMP <deg>` | skok lampy na uhol | `testrig_jump(deg)` | Maszay |
 | `RIG STOP` | zastaví lampu | `testrig_stop()` | Maszay |
 | `LOG ON\|OFF` | zapne / vypne telemetriu | interné v `comm.c` | Kanta |
 | `PV RESET` | vynuluje energiu panelu | `ina219_reset_energy()` | Kanta |
@@ -49,17 +54,18 @@ Riadok, ktorý začína číslicou, je telemetria. Každý iný riadok začína 
 |---|---|---|
 | `#H` | hlavička telemetrie, posiela sa po `LOG ON` | `#H t_ms,lh,ph,...` |
 | `#OK` | príkaz sa vykonal | `#OK KP` |
-| `#ERR` | príkaz sa nevykonal | `#ERR RANGE` |
+| `#ERR` | príkaz sa nevykonal | `#ERR RANGE KP` |
 | `#EV` | udalosť | `#EV MODE SEARCH` |
 
-Chybové kódy:
+Chybová odpoveď má tvar `#ERR <kód> <príkaz>`, iba `TOO_LONG` je bez príkazu. Kódy:
 
 | Kód | Kedy |
 |---|---|
 | `UNKNOWN` | neznámy príkaz |
 | `ARGS` | chýba argument alebo nie je číslo |
 | `RANGE` | modul hodnotu odmietol |
-| `BUSY` | príkaz sa teraz nedá vykonať (napr. `CAL` mimo režimu CALIB) |
+| `BUSY` | modul príkaz bez čísla odmietol (napr. `CAL` mimo režimu CALIB) |
+| `NOT_IMPL` | modul funkciu ešte nemá |
 | `TOO_LONG` | riadok je dlhší ako 64 znakov |
 
 ## 4. Telemetria
@@ -91,25 +97,27 @@ V Pythone stačí stĺpec vydeliť mierkou.
 | 15 | `i_ua` | prúd panelu | µA | ×1000 | 0 … 400000 |
 | 16 | `p_uw` | výkon panelu | µW | ×1000 | 0 … |
 | 17 | `e_mj` | energia od `PV RESET` | mJ | ×1000 | 0 … |
+| 18 | `rig_phase` | fáza prípravku, `testrig_phase()` | kód | – | podľa `testrig.h` |
+| 19 | `overruns` | počet nestihnutých tickov od štartu | – | 1 | 0 … |
 
 Mierka znamená, akým číslom STM32 násobí hodnotu z `telemetry_t`. V Pythone sa ním hodnota delí.
 
 Príklad:
 
 ```
-#H t_ms,lh,ph,ld,pd,s,e_h,e_v,pan,tilt,mode,ctrl,lamp,u_mv,i_ua,p_uw,e_mj
-123460,512,498,430,441,1881,2,74,903,452,0,2,950,5120,142350,728832,1534
+#H t_ms,lh,ph,ld,pd,s,e_h,e_v,pan,tilt,mode,ctrl,lamp,u_mv,i_ua,p_uw,e_mj,rig_phase,overruns
+123460,512,498,430,441,1881,2,74,903,452,0,2,950,5120,142350,728832,1534,2,3
 ```
 
-Znamená to: čas 123,46 s, S = 1,881, e_h = 0,002, e_v = 0,074, pan 90,3°, tilt 45,2°, režim TRACK, regulátor PI, lampa 95,0°, panel 5,12 V, 142,35 mA, 728,8 mW, od nulovania 1,534 J.
+Znamená to: čas 123,46 s, S = 1,881, e_h = 0,002, e_v = 0,074, pan 90,3°, tilt 45,2°, režim TRACK, regulátor PI, lampa 95,0°, panel 5,12 V, 142,35 mA, 728,8 mW, od nulovania 1,534 J, prípravok vo fáze 2 a doteraz 3 nestihnuté ticky.
 
 `pan` a `tilt` sú uhly, ktoré posiela firmvér do serv, nie namerané polohy. Servo spätnú väzbu nemá.
 
 ### Priepustnosť
 
-Riadok s najdlhšími možnými hodnotami má najviac 96 bajtov vrátane `\r\n`, bežný riadok okolo 75 bajtov:
-- 115200 Bd pri 8N1 prenesie 11 520 B/s, 50 riadkov × 96 B = 4800 B/s, teda linka je vyťažená najviac na **42 %**,
-- jeden riadok trvá na linke ~8,3 ms. Keby sa posielal blokujúco, zabral by takmer polovicu 20 ms ticku. Preto sa vysiela cez TX buffer a prerušenie TXE,
+Riadok s najdlhšími možnými hodnotami má najviac 110 bajtov vrátane `\r\n`, bežný riadok okolo 80 bajtov:
+- 115200 Bd pri 8N1 prenesie 11 520 B/s, 50 riadkov × 110 B = 5500 B/s, teda linka je vyťažená najviac na **48 %**,
+- jeden riadok trvá na linke ~9,5 ms. Keby sa posielal blokujúco, zabral by takmer polovicu 20 ms ticku. Preto sa vysiela cez TX buffer a prerušenie TXE,
 - pri 38400 Bd (~3800 B/s) by sa telemetria do linky **nezmestila**.
 
 ## 5. Pravidlá zmien
@@ -122,6 +130,6 @@ Riadok s najdlhšími možnými hodnotami má najviac 96 bajtov vrátane `\r\n`,
 
 1. **Kde beží `fsm_tick()`.** Návrh: TIM6 prerušenie iba nastaví príznak a `fsm_tick()` aj `comm_process()` bežia v hlavnej slučke. Potom príkazy z UART môžu meniť parametre regulátora bez ochrany proti súbehu. Ak to schválime, zmeníme vetu v README „regulácia beží v prerušení časovača“.
 2. **Király:** sú hodnoty snímačov po kalibrácii v rozsahu 0 … 1? Aký je prah S pre stratu zdroja?
-3. **Maszay:** názvy funkcií `control_set_*` a `testrig_*` a kódy regulátorov. Pre meranie skoku chýba v `RIG` príkaz na skok lampy, napríklad `RIG JUMP <deg>`. Pre meranie energie treba profil s pevnou dĺžkou a `testrig_running()`.
+3. **Maszay:** dohodnuté 19. 11.: príkazy `RIG JUMP`, `DB`, `SIGN`, stĺpce `rig_phase` a `overruns`, `CTRL_AXIS_PAN = 0`, `CTRL_AXIS_TILT = 1`. V `fsm_tick()` poradie `control_update()` → `motion_move()` → `control_feedback()`, `control_reset()` pri zmene režimu, `testrig_step()` a `servo_set_angle(SERVO_LAMP, testrig_angle())`.
 4. **Marcinek:** názvy `motion_set_vmax()`, `motion_set_limits()` a funkcia na zadanie cieľovej polohy pre `GOTO`.
-5. **Meranie energie:** príkaz `EXP <profil> TRACK|FIXED`, ktorý spustí oba behy za rovnakých podmienok. Doplní sa po dohode o prípravku.
+5. **Meranie energie:** energia sa integruje iba keď `testrig_phase() == RIG_RUN`, výsledok sa pošle pri prechode do `RIG_DONE` (dohodnuté s Maszayom).
