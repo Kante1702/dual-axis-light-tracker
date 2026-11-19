@@ -143,9 +143,11 @@ GOTO <pan> <tilt>
 CAL DARK | BRIGHT | SAVE
 RIG RAMP <deg/s> | SINE <amp> <perioda> | STOP
 LOG ON | OFF
+PV RESET
+PING
 ```
 
-Telemetria ide ako CSV riadok 50x za sekundu: čas, 4 snímače, S, e_h, e_v, uhly pan a tilt, režim, regulátor, uhol lampy, výkony panelov.
+Telemetria ide ako CSV riadok 50x za sekundu: čas, 4 snímače, S, e_h, e_v, uhly pan a tilt, režim, regulátor, uhol lampy, napätie, prúd, výkon a energia panelu. Presný formát príkazov, odpovedí a stĺpcov telemetrie je v [`docs/protokol_uart.md`](docs/protokol_uart.md).
 
 ## Rozdelenie úloh
 
