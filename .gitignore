@@ -17,3 +17,6 @@ Release/
 RemoteSystemsTempFiles/
 tools/sim_out/
 __pycache__/
+tools/sim_out/
+tools/analyza_out/
+__pycache__/
