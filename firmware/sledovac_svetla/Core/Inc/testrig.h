@@ -36,7 +36,7 @@ typedef enum {
 
 void        testrig_init(void);
 bool        testrig_start(const rig_profile_t *p);
-void        testrig_stop(void);
+bool        testrig_stop(void);
 void        testrig_step(void);
 
 bool        testrig_jump(float target_deg);

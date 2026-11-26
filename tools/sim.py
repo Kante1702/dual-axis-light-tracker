@@ -58,30 +58,16 @@ class Controller:
         self.d_req = 0.0
         self.integrated = False
 
-    def update(self, e, lost=False):
-        self.integrated = False
-        if lost:
-            self.d_req = 0.0
-            return 0.0
-        self.e_last = e
+    def update(self, e, sat=0):
         if self.kind == "STEP":
             d = self.step_deg if e > self.db else (-self.step_deg if e < -self.db else 0.0)
         elif self.kind == "P":
             d = self.kp * e
         else:
-            self.sum = max(-500.0, min(500.0, self.sum + e))
-            self.integrated = True
+            if sat * e <= 0.0:
+                self.sum = max(-500.0, min(500.0, self.sum + e))
             d = self.kp * e + self.ki * self.sum
-        self.d_req = d
         return d
-
-    def feedback(self, applied):
-        if not self.integrated:
-            return
-        if abs(applied) + 1e-4 < abs(self.d_req) and self.d_req * self.e_last > 0.0:
-            self.sum -= self.e_last
-        self.integrated = False
-
 
 class Motion:
     def __init__(self, pos, lo, hi, vmax):
@@ -89,12 +75,19 @@ class Motion:
         self.lo = lo
         self.hi = hi
         self.dmax = vmax * T
+        self.sat = 0
 
     def move(self, d):
-        d = max(-self.dmax, min(self.dmax, d))
-        new = max(self.lo, min(self.hi, self.pos + d))
+        dc = max(-self.dmax, min(self.dmax, d))
+        new = max(self.lo, min(self.hi, self.pos + dc))
         applied = new - self.pos
         self.pos = new
+        if applied < d - 1e-6:
+            self.sat = 1
+        elif applied > d + 1e-6:
+            self.sat = -1
+        else:
+            self.sat = 0
         return applied
 
 
@@ -188,9 +181,8 @@ def simulate(ctrl_kind, prof, a, kp=None, ki=None, step=None, seed=0):
         e_block = acc / SUB
         e_filt = a.ema * e_block + (1.0 - a.ema) * e_filt
 
-        d = ctl.update(e_filt)
-        applied = motion.move(d)
-        ctl.feedback(applied)
+        d = ctl.update(e_filt, motion.sat)
+        motion.move(d)
         rig.step()
 
         s = a.s_level

@@ -30,7 +30,6 @@ bool        control_set_deadband(float db);
 bool        control_set_sign(ctrl_axis_t axis, int8_t sign);
 
 void control_update(float e_h, float e_v, bool lost, uint32_t seq, bool avoid,
-                    float *d_pan, float *d_tilt);
-void control_feedback(float applied_pan, float applied_tilt);
+                    int8_t sat_pan, int8_t sat_tilt, float *d_pan, float *d_tilt);
 
 #endif

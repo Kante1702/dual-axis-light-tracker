@@ -6,14 +6,10 @@
 #define STEP_MAX     10.0f
 #define DB_MAX       1.0f
 #define SUM_LIMIT    500.0f
-#define SAT_EPS      1e-4f
 
 typedef struct {
     int8_t sign;
     float  sum;
-    float  e_last;
-    float  d_req;
-    bool   integrated;
 } axis_state_t;
 
 static ctrl_type_t  type;
@@ -32,12 +28,9 @@ static float clampf(float x, float lo, float hi)
     return x;
 }
 
-static float axis_step(axis_state_t *a, float e)
+static float axis_step(axis_state_t *a, float e, int8_t sat)
 {
     float d = 0.0f;
-
-    a->e_last = e;
-    a->integrated = false;
 
     switch (type) {
     case CTRL_STEP:
@@ -48,33 +41,20 @@ static float axis_step(axis_state_t *a, float e)
         d = kp * e;
         break;
     case CTRL_PI:
-        a->sum = clampf(a->sum + e, -SUM_LIMIT, SUM_LIMIT);
-        a->integrated = true;
+        if ((float)sat * e <= 0.0f)
+            a->sum = clampf(a->sum + e, -SUM_LIMIT, SUM_LIMIT);
         d = kp * e + ki * a->sum;
         break;
     }
-
-    a->d_req = d;
     return d;
-}
-
-static void axis_feedback(axis_state_t *a, float applied)
-{
-    if (!a->integrated)
-        return;
-
-    if (fabsf(applied) + SAT_EPS < fabsf(a->d_req) && a->d_req * a->e_last > 0.0f)
-        a->sum -= a->e_last;
-
-    a->integrated = false;
 }
 
 void control_init(void)
 {
     type     = CTRL_P;
-    kp       = 1.0f;
-    ki       = 0.0f;
-    step_deg = 1.0f;
+    kp       = 4.0f;
+    ki       = 0.1f;
+    step_deg = 0.5f;
     deadband = 0.02f;
     have_seq = false;
     last_seq = 0;
@@ -85,12 +65,8 @@ void control_init(void)
 
 void control_reset(void)
 {
-    for (int i = 0; i < CTRL_AXIS_COUNT; i++) {
+    for (int i = 0; i < CTRL_AXIS_COUNT; i++)
         ax[i].sum = 0.0f;
-        ax[i].e_last = 0.0f;
-        ax[i].d_req = 0.0f;
-        ax[i].integrated = false;
-    }
 }
 
 bool control_set_type(ctrl_type_t t)
@@ -148,7 +124,7 @@ bool control_set_sign(ctrl_axis_t axis, int8_t sign)
 }
 
 void control_update(float e_h, float e_v, bool lost, uint32_t seq, bool avoid,
-                    float *d_pan, float *d_tilt)
+                    int8_t sat_pan, int8_t sat_tilt, float *d_pan, float *d_tilt)
 {
     bool fresh = !have_seq || seq != last_seq;
 
@@ -160,22 +136,11 @@ void control_update(float e_h, float e_v, bool lost, uint32_t seq, bool avoid,
         have_seq = true;
     }
 
-    if (lost || !fresh) {
-        for (int i = 0; i < CTRL_AXIS_COUNT; i++) {
-            ax[i].d_req = 0.0f;
-            ax[i].integrated = false;
-        }
+    if (lost || !fresh)
         return;
-    }
 
     float k = avoid ? -1.0f : 1.0f;
 
-    *d_pan  = axis_step(&ax[CTRL_AXIS_PAN],  k * ax[CTRL_AXIS_PAN].sign  * e_h);
-    *d_tilt = axis_step(&ax[CTRL_AXIS_TILT], k * ax[CTRL_AXIS_TILT].sign * e_v);
-}
-
-void control_feedback(float applied_pan, float applied_tilt)
-{
-    axis_feedback(&ax[CTRL_AXIS_PAN],  applied_pan);
-    axis_feedback(&ax[CTRL_AXIS_TILT], applied_tilt);
+    *d_pan  = axis_step(&ax[CTRL_AXIS_PAN],  k * ax[CTRL_AXIS_PAN].sign  * e_h, sat_pan);
+    *d_tilt = axis_step(&ax[CTRL_AXIS_TILT], k * ax[CTRL_AXIS_TILT].sign * e_v, sat_tilt);
 }

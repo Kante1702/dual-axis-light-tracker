@@ -90,10 +90,11 @@ bool testrig_start(const rig_profile_t *p)
     return true;
 }
 
-void testrig_stop(void)
+bool testrig_stop(void)
 {
     phase = RIG_IDLE;
     ticks = 0;
+    return true;
 }
 
 void testrig_step(void)
