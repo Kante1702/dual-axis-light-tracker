@@ -15,8 +15,14 @@ Release/
 .settings/
 *.launch
 RemoteSystemsTempFiles/
-tools/sim_out/
-__pycache__/
+
+# zaznamy z loggera
+tools/data/
+
+# nastavenia editora
+.vs/
+
+# vystupy simulacie a analyzy
 tools/sim_out/
 tools/analyza_out/
 __pycache__/
