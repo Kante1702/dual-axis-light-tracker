@@ -21,3 +21,8 @@ tools/data/
 
 # nastavenia editora
 .vs/
+
+# vystupy simulacie a analyzy
+tools/sim_out/
+tools/analyza_out/
+__pycache__/
