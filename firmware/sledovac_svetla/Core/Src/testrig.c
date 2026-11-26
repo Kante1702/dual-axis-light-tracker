@@ -1,4 +1,5 @@
 #include "testrig.h"
+#include "comm_hooks.h"
 #include <math.h>
 
 #define RIG_GOTO_DPS      60.0f

@@ -1,4 +1,5 @@
 #include "control.h"
+#include "comm_hooks.h"
 #include <math.h>
 
 #define KP_MAX       20.0f
@@ -69,11 +70,11 @@ void control_reset(void)
         ax[i].sum = 0.0f;
 }
 
-bool control_set_type(ctrl_type_t t)
+bool control_set_type(uint8_t t)
 {
-    if (t != CTRL_STEP && t != CTRL_P && t != CTRL_PI)
+    if (t > CTRL_PI)
         return false;
-    type = t;
+    type = (ctrl_type_t)t;
     control_reset();
     return true;
 }
@@ -115,7 +116,7 @@ bool control_set_deadband(float v)
     return true;
 }
 
-bool control_set_sign(ctrl_axis_t axis, int8_t sign)
+bool control_set_sign(uint8_t axis, int8_t sign)
 {
     if (axis >= CTRL_AXIS_COUNT || (sign != 1 && sign != -1))
         return false;
