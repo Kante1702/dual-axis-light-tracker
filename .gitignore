@@ -15,3 +15,9 @@ Release/
 .settings/
 *.launch
 RemoteSystemsTempFiles/
+
+# zaznamy z loggera
+tools/data/
+
+# nastavenia editora
+.vs/
