@@ -51,7 +51,9 @@ def load(path):
 
 def cut_run(c, a):
     t = c["t"]
-    if a.t0 is not None or a.t1 is not None:
+    if a.all:
+        mask = np.ones_like(t, dtype=bool)
+    elif a.t0 is not None or a.t1 is not None:
         lo = a.t0 if a.t0 is not None else -np.inf
         hi = a.t1 if a.t1 is not None else np.inf
         mask = (t >= lo) & (t <= hi)
@@ -140,7 +142,7 @@ def estimate_lag(lamp, pan, dt, max_s=1.0):
         r = float(np.sqrt(np.mean(d ** 2)))
         if r < best:
             best, best_k = r, k
-    return best_k * dt
+    return best_k * dt if best_k < int(max_s / dt) else math.nan
 
 
 def jump_metrics(run, prev, a):
@@ -266,6 +268,7 @@ def main():
     ap.add_argument("--sign", type=float, default=1.0)
     ap.add_argument("--t0", type=float)
     ap.add_argument("--t1", type=float)
+    ap.add_argument("--all", action="store_true")
     ap.add_argument("--out", default="analyza_out")
     ap.add_argument("--no-plot", action="store_true")
     a = ap.parse_args()
@@ -292,6 +295,10 @@ def main():
         profile = a.profile or detect_profile(run, prev)
         ctrl = CTRL_NAMES.get(int(np.round(np.median(run["ctrl"]))), "?") if "ctrl" in run else "?"
         m = jump_metrics(run, prev, a) if profile == "jump" else track_metrics(run, prev, a)
+        if "overruns" in run:
+            m["overruns"] = int(run["overruns"][-1] - run["overruns"][0])
+            if m["overruns"] > 0:
+                print(f"{p}: počas merania {m['overruns']} nestihnutých tickov")
         rec = {"file": os.path.basename(p), "profile": profile, "ctrl": ctrl, "metrics": m, "run": run}
         results.append(rec)
         by_profile.setdefault(profile, {}).setdefault(ctrl, []).append(rec)
