@@ -38,6 +38,8 @@ Kým modul funkciu nemá, použije sa dočasná (weak) verzia z `comm_hooks.c` a
 | `LIM PAN <min> <max>` | rozsah pan | `motion_set_limits(AXIS_PAN, min, max)` | Marcinek |
 | `LIM TILT <min> <max>` | rozsah tilt | `motion_set_limits(AXIS_TILT, min, max)` | Marcinek |
 | `CAL DARK\|BRIGHT\|SAVE` | kalibrácia snímačov | `calib_capture_dark()`, `calib_capture_bright()`, `calib_save()` | Király |
+| `EMA <alfa>` | koeficient EMA filtra snímačov, 0 < alfa ≤ 1 | `filter_set_alpha(alfa)` | Király |
+| `SLOST <lost> <found>` | prahy straty a nájdenia zdroja podľa S, 0 ≤ lost < found ≤ 4 | `sensors_set_lost_thresholds(lost, found)` | Király |
 | `RIG RAMP <deg/s>` | lampa ide rampou | `testrig_ramp(v)` | Maszay |
 | `RIG SINE <amp> <perioda>` | lampa ide sínusom | `testrig_sine(amp, perioda)` | Maszay |
 | `RIG JUMP <deg>` | skok lampy na uhol | `testrig_jump(deg)` | Maszay |
@@ -55,7 +57,7 @@ Riadok, ktorý začína číslicou, je telemetria. Každý iný riadok začína 
 | `#H` | hlavička telemetrie, posiela sa po `LOG ON` | `#H t_ms,lh,ph,...` |
 | `#OK` | príkaz sa vykonal | `#OK KP` |
 | `#ERR` | príkaz sa nevykonal | `#ERR RANGE KP` |
-| `#EV` | udalosť | `#EV MODE SEARCH` |
+| `#EV` | udalosť, napr. zmena režimu (posiela sa pred `#OK`) | `#EV MODE SEARCH` |
 
 Chybová odpoveď má tvar `#ERR <kód> <príkaz>`, iba `TOO_LONG` je bez príkazu. Kódy:
 
@@ -129,7 +131,7 @@ Riadok s najdlhšími možnými hodnotami má najviac 110 bajtov vrátane `\r\n`
 ## 6. Otvorené body na dohodu
 
 1. **Kde beží `fsm_tick()`.** Návrh: TIM6 prerušenie iba nastaví príznak a `fsm_tick()` aj `comm_process()` bežia v hlavnej slučke. Potom príkazy z UART môžu meniť parametre regulátora bez ochrany proti súbehu. Ak to schválime, zmeníme vetu v README „regulácia beží v prerušení časovača“.
-2. **Király:** sú hodnoty snímačov po kalibrácii v rozsahu 0 … 1? Aký je prah S pre stratu zdroja?
+2. **Király:** dohodnuté 26. 11.: `ch[]` po kalibrácii nominálne 0 … 1 (zhora sa neorezáva), S nominálne 0 … 4, strata zdroja pri S < 0,3, opätovné nájdenie pri S > 0,5 (príkaz `SLOST`). Otvorené: záznam surových dát do RAM príkazom `RAW <n>`.
 3. **Maszay:** dohodnuté 19. 11.: príkazy `RIG JUMP`, `DB`, `SIGN`, stĺpce `rig_phase` a `overruns`, `CTRL_AXIS_PAN = 0`, `CTRL_AXIS_TILT = 1`. Dohodnuté 26. 11.: v `fsm_tick()` sa vždy volá `sensors_get(&s)`. Iba v TRACK/AVOID nasleduje `control_update(s.e_h, s.e_v, s.lost, s.seq, avoid, motion_get_sat(SERVO_PAN), motion_get_sat(SERVO_TILT), &d_pan, &d_tilt)` a `motion_set_target(motion_get_angle(SERVO_PAN) + d_pan, motion_get_angle(SERVO_TILT) + d_tilt)`. Vo všetkých režimoch potom `motion_update()`, `testrig_step()` a `servo_set_angle(SERVO_LAMP, testrig_angle())`; lampa ide priamo cez servo, nie cez motion. `control_reset()` pri každej zmene režimu. `motion_move()` a `control_feedback()` už neexistujú.
 4. **Marcinek:** názvy `motion_set_vmax()`, `motion_set_limits()` a funkcia na zadanie cieľovej polohy pre `GOTO`.
 5. **Meranie energie:** energia sa integruje iba keď `testrig_phase() == RIG_RUN`, výsledok sa pošle pri prechode do `RIG_DONE` (dohodnuté s Maszayom).

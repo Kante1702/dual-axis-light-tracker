@@ -127,6 +127,21 @@ WEAK bool testrig_stop(void)
 }
 
 
+WEAK bool sensors_set_lost_thresholds(float lost, float found)
+{
+	(void)lost;
+	(void)found;
+	comm_hook_missing();
+	return false;
+}
+
+WEAK bool filter_set_alpha(float a)
+{
+	(void)a;
+	comm_hook_missing();
+	return false;
+}
+
 WEAK bool ina219_reset_energy(void)
 {
 	comm_hook_missing();

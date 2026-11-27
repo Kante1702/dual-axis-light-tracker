@@ -31,6 +31,10 @@ bool control_set_sign(uint8_t axis, int8_t sign);   /* axis 0 pan, 1 tilt; sign 
 bool motion_set_vmax(float vmax_deg_s);
 bool motion_set_limits(uint8_t axis, float min_deg, float max_deg);
 
+/* sensors.c, filter.c */
+bool sensors_set_lost_thresholds(float lost, float found);   /* 0 <= lost < found <= 4 */
+bool filter_set_alpha(float a);                               /* 0 < a <= 1 */
+
 /* calib.c */
 bool calib_capture_dark(void);
 bool calib_capture_bright(void);

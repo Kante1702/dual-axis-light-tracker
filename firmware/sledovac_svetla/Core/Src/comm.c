@@ -325,6 +325,15 @@ static result_t cmd_ki(int argc, char **argv)   { (void)argc; return one_float(a
 static result_t cmd_step(int argc, char **argv) { (void)argc; return one_float(argv, control_set_step); }
 static result_t cmd_db(int argc, char **argv)   { (void)argc; return one_float(argv, control_set_deadband); }
 static result_t cmd_vmax(int argc, char **argv) { (void)argc; return one_float(argv, motion_set_vmax); }
+static result_t cmd_ema(int argc, char **argv)  { (void)argc; return one_float(argv, filter_set_alpha); }
+
+static result_t cmd_slost(int argc, char **argv)
+{
+    float lost, found;
+    (void)argc;
+    if (!parse_float(argv[1], &lost) || !parse_float(argv[2], &found)) return R_ARGS;
+    return ok_if(sensors_set_lost_thresholds(lost, found), R_RANGE);
+}
 
 static const char *const axes[] = { "PAN", "TILT" };   /* index = AXIS_x = CTRL_AXIS_x */
 
@@ -420,6 +429,8 @@ static const command_t commands[] = {
     { "VMAX", 2, cmd_vmax },
     { "LIM",  4, cmd_lim  },
     { "CAL",  2, cmd_cal  },
+	{ "EMA",  2, cmd_ema  },
+	{ "SLOST", 3, cmd_slost },
     { "RIG",  0, cmd_rig  },
     { "LOG",  2, cmd_log  },
     { "PV",   2, cmd_pv   },

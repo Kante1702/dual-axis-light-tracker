@@ -74,10 +74,10 @@ static void test_tick(void)
     float saw = (k < 180u) ? (float)k : (float)(360u - k);
 
     telemetry_t t = { 0 };
-    t.t_ms     = tick_count * 20u;
+    t.t_ms = tick_count * 20u;
     t.pan_deg  = saw;
     t.lamp_deg = 180.0f - saw;
-    t.mode     = MODE_MANUAL;
+    t.mode = (uint8_t)fsm_get_mode();
     comm_send_telemetry(&t);
 }
 /* USER CODE END 0 */
@@ -124,6 +124,8 @@ int main(void)
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   comm_init();
+  fsm_init();
+
     LL_TIM_ClearFlag_UPDATE(TIM6);
     LL_TIM_EnableCounter(TIM6);                     /* TIM6: perioda 20 ms */
     comm_send("#EV START\r\n");
