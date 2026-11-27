@@ -29,6 +29,8 @@
 /* USER CODE BEGIN Includes */
 #include "comm.h"
 #include "fsm.h"
+#include "control.h"
+#include "testrig.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,7 +51,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-static uint32_t tick_count;     /* pocet 20 ms tickov od startu */
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -61,25 +63,7 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 /* docasny test dosky (krok 4), v kroku 5 ho nahradi fsm_tick() */
-static void test_tick(void)
-{
-    tick_count++;
 
-    if (tick_count % 25u == 0u) {                   /* kazdych 500 ms */
-        LL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    }
-
-    /* pila 0..180..0 stupnov za 7,2 s, aby bolo v grafe nieco vidno */
-    uint32_t k = tick_count % 360u;
-    float saw = (k < 180u) ? (float)k : (float)(360u - k);
-
-    telemetry_t t = { 0 };
-    t.t_ms = tick_count * 20u;
-    t.pan_deg  = saw;
-    t.lamp_deg = 180.0f - saw;
-    t.mode = (uint8_t)fsm_get_mode();
-    comm_send_telemetry(&t);
-}
 /* USER CODE END 0 */
 
 /**
@@ -124,11 +108,11 @@ int main(void)
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   comm_init();
+  control_init();
+   testrig_init();
   fsm_init();
+  comm_send("#EV START\r\n");
 
-    LL_TIM_ClearFlag_UPDATE(TIM6);
-    LL_TIM_EnableCounter(TIM6);                     /* TIM6: perioda 20 ms */
-    comm_send("#EV START\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -139,10 +123,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  comm_process();
-	  if (LL_TIM_IsActiveFlag_UPDATE(TIM6)) {
-	        LL_TIM_ClearFlag_UPDATE(TIM6);
-	        test_tick();
-	      }
+	      fsm_process();
   }
   /* USER CODE END 3 */
 }
