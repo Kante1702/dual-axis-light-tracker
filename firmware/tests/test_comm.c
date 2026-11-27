@@ -68,6 +68,8 @@ bool motion_set_limits(uint8_t a, float lo, float hi)
     last_i = a; last_f1 = lo; last_f2 = hi; calls++;
     return lo < hi;
 }
+bool sensors_set_lost_thresholds(float lo, float fo) { last_f1 = lo; last_f2 = fo; calls++; return lo >= 0.0f && lo < fo && fo <= 4.0f; }
+bool filter_set_alpha(float a) { last_f1 = a; calls++; return a > 0.0f && a <= 1.0f; }
 bool calib_capture_dark(void)                { calls++; return false; }
 bool calib_capture_bright(void)              { calls++; return true; }
 bool calib_save(void)                        { calls++; return true; }
@@ -163,6 +165,14 @@ static void test_words(void)
     check_str("rig sine bez periody", cmd("RIG SINE 30\r"), "#ERR ARGS RIG\r\n");
     check_str("pv reset", cmd("PV RESET\r"), "#OK PV\r\n");
     check_str("pv zle", cmd("PV ZERO\r"), "#ERR ARGS PV\r\n");
+    check_str("ema", cmd("EMA 0.2\r"), "#OK EMA\r\n");
+    check("ema hodnota", near(last_f1, 0.2f));
+    check_str("ema 0", cmd("EMA 0\r"), "#ERR RANGE EMA\r\n");
+    check_str("ema 1.5", cmd("EMA 1.5\r"), "#ERR RANGE EMA\r\n");
+    check_str("slost", cmd("SLOST 0.3 0.5\r"), "#OK SLOST\r\n");
+    check("slost hodnoty", near(last_f1, 0.3f) && near(last_f2, 0.5f));
+    check_str("slost obratene", cmd("SLOST 0.5 0.3\r"), "#ERR RANGE SLOST\r\n");
+    check_str("slost jedno cislo", cmd("SLOST 0.3\r"), "#ERR ARGS SLOST\r\n");
     check_str("neznamy", cmd("FOO 1\r"), "#ERR UNKNOWN FOO\r\n");
     check_str("vmax chyba modul", cmd("VMAX 60\r"), "#ERR NOT_IMPL VMAX\r\n");
     check_str("po not_impl ide dalsi", cmd("PING\r"), "#OK PING\r\n");
