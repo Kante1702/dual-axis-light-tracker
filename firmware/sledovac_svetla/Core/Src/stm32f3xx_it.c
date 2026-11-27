@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "comm.h"
+#include "fsm.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -237,7 +238,7 @@ void EXTI15_10_IRQHandler(void)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_12);
     /* USER CODE BEGIN LL_EXTI_LINE_12 */
-
+    fsm_on_button();
     /* USER CODE END LL_EXTI_LINE_12 */
   }
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */
@@ -251,7 +252,7 @@ void EXTI15_10_IRQHandler(void)
 void TIM6_DAC1_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM6_DAC1_IRQn 0 */
-
+	  fsm_tim6_irq();
   /* USER CODE END TIM6_DAC1_IRQn 0 */
   /* USER CODE BEGIN TIM6_DAC1_IRQn 1 */
 

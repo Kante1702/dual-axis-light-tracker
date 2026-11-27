@@ -18,8 +18,11 @@ typedef enum {
     MODE_COUNT
 } fsm_mode_t;
 
-void       fsm_init(void);
+void       fsm_init(void);      /* spusti aj TIM6 */
+void       fsm_process(void);   /* volat v hlavnej slucke, ak prisiel tick, zavola fsm_tick() */
 void       fsm_tick(void);      /* kazdych 20 ms */
+void       fsm_tim6_irq(void);  /* volat z TIM6_DAC1_IRQHandler */
+uint32_t   fsm_overruns(void);  /* pocet nestihnutych tickov */
 fsm_mode_t fsm_get_mode(void);
 bool       fsm_request_mode(fsm_mode_t m);
 bool       fsm_manual_goto(float pan_deg, float tilt_deg);
